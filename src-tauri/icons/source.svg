@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- App icon source. `npx tauri icon src-tauri/icons/source.svg` regenerates
+       every platform size from this file. Same dark rounded tile as
+       Latex-Floater's icon, with a single amber periodic-table cell in place
+       of the fraction bar — this app's most recognizable shape. -->
+  <rect x="0" y="0" width="1024" height="1024" rx="224" fill="#12131a"/>
+  <rect x="272" y="272" width="480" height="480" rx="56" fill="#d4a45c"/>
+  <text x="320" y="400" font-family="Arial, sans-serif" font-size="72" font-weight="600" fill="#1a1a1a">1</text>
+  <text x="512" y="600" text-anchor="middle" font-family="Arial, sans-serif" font-size="220" font-weight="700" fill="#1a1a1a">H</text>
+</svg>

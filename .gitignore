@@ -1,0 +1,8 @@
+# Regenerable: `npm install` and the Rust build in src-tauri/target/. Also
+# platform-specific, so useless to share between the Windows and Mac machines.
+node_modules/
+src-tauri/target/
+src-tauri/gen/schemas/
+dist/
+
+.DS_Store

@@ -1,0 +1,633 @@
+/* styles.css — Periodic Table
+ *
+ * Same design brief as Latex-Floater: dense desktop utility, warm amber
+ * accent, dark theme default with a light mode via [data-theme="light"] on
+ * <html>. Category swatch colors (the periodic table's own color coding) are
+ * a separate fixed palette, independent of dark/light mode and untouched by
+ * every battle-pass theme — they're a factual legend, not chrome, the same
+ * way Latex-Floater's math glyphs follow --fg rather than --accent.
+ */
+
+/* IBM Plex, self-hosted (fonts/) for the same reason as Latex-Floater: no
+ * network dependency delaying the window becoming usable. */
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/IBMPlexMono-Regular.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/IBMPlexMono-Medium.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-weight: 400;
+  font-display: swap;
+  src: url('fonts/IBMPlexSans-Variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-weight: 500;
+  font-display: swap;
+  src: url('fonts/IBMPlexSans-Variable.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Sans';
+  font-weight: 600;
+  font-display: swap;
+  src: url('fonts/IBMPlexSans-Variable.woff2') format('woff2');
+}
+
+:root {
+  --bg:          #12131a;
+  --bg-raise:    #1a1c25;
+  --bg-hover:    #232532;
+  --bg-sink:     #0d0e14;
+  --bg-bar:      #0f1016;
+  --border:      #272935;
+  --border-strong: #363949;
+  --fg:          #e4e6ee;
+  --fg-dim:      #8b8fa3;
+  --fg-faint:    #5a5e72;
+  --accent:      #d4a45c;
+  --accent-soft: rgba(212, 164, 92, 0.14);
+  --accent-hover: #e0b472;
+  --danger:      #e06c75;
+  --danger-bg:   #3d2327;
+  --success:     #98c379;
+  --radius:      6px;
+  --radius-sm:   4px;
+  --table-min-height: 400px; /* must match TABLE_MIN_HEIGHT in battlepass.js */
+
+  /* Category swatches — fixed, not theme-derived. Mid-saturation pastels
+     with a dark fixed text color (see .element-cell) so they stay legible
+     regardless of dark/light mode. */
+  --cat-alkali:            #e57373;
+  --cat-alkaline-earth:    #ffb74d;
+  --cat-transition:        #ffe066;
+  --cat-post-transition:   #81c784;
+  --cat-metalloid:         #4db6ac;
+  --cat-reactive-nonmetal: #aed581;
+  --cat-noble-gas:         #64b5f6;
+  --cat-lanthanide:        #f06292;
+  --cat-actinide:          #ba68c8;
+  --cat-unknown:           #9e9e9e;
+  --cat-text:              #1a1a1a;
+}
+
+html[data-theme="light"] {
+  --bg:          #f4f2ed;
+  --bg-raise:    #ffffff;
+  --bg-hover:    #e8e5de;
+  --bg-sink:     #ece9e2;
+  --bg-bar:      #e2dfd8;
+  --border:      #ccc9c0;
+  --border-strong: #b0ada4;
+  --fg:          #1c1b18;
+  --fg-dim:      #6a6760;
+  --fg-faint:    #9a9790;
+  --accent:      #a86e24;
+  --accent-soft: rgba(168, 110, 36, 0.12);
+  --accent-hover: #c07f2a;
+  --danger:      #c0392b;
+  --danger-bg:   #fde8e6;
+  --success:     #27ae60;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  overflow: hidden;
+  font-family: 'IBM Plex Sans', system-ui, sans-serif;
+  font-size: 13px;
+  color: var(--fg);
+  background: var(--bg);
+  background-image: linear-gradient(180deg, var(--bg) 0%, var(--bg-sink) 100%);
+  -webkit-font-smoothing: antialiased;
+  transition: background 0.15s, color 0.15s;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  user-select: none;
+}
+
+/* =========================================================================
+   Titlebar (carried over from Latex-Floater, minus font-size/history controls)
+   ========================================================================= */
+
+.titlebar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 30px;
+  padding: 0 6px 0 12px;
+  background: var(--bg-bar);
+  border-bottom: 1px solid var(--border);
+  flex-shrink: 0;
+}
+
+.titlebar__brand {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--fg-dim);
+  font-weight: 500;
+}
+
+.titlebar__dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--accent);
+  box-shadow: 0 0 6px var(--accent-soft);
+}
+
+.titlebar__controls {
+  display: flex;
+  gap: 2px;
+  align-items: center;
+}
+
+.titlebar__btn {
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: transparent;
+  color: var(--fg-faint);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+.titlebar__btn:hover         { background: var(--bg-hover); color: var(--fg); }
+.titlebar__btn--close:hover  { background: var(--danger-bg); color: var(--danger); }
+.titlebar__btn--pin.is-active { color: var(--accent); }
+
+.titlebar__coins {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 6px 0 4px;
+  height: 24px;
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  color: #d4a45c;
+  cursor: default;
+}
+
+.menu {
+  position: fixed;
+  z-index: 20;
+  min-width: 170px;
+  padding: 4px;
+  background: var(--bg-raise);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+.menu[hidden] { display: none; }
+.menu__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  border: none;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+}
+.menu__item:hover:not(:disabled) { background: var(--bg-hover); }
+.menu__item:disabled { color: var(--fg-faint); cursor: default; }
+.menu__item.is-current { color: var(--accent); }
+.menu__name { flex: 1; }
+.menu__tag {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 9.5px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--fg-faint);
+}
+.menu__tag--lock::before { content: "🔒 "; font-size: 9px; }
+
+.titlebar__opacity {
+  width: 56px;
+  height: 3px;
+  accent-color: var(--accent);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  align-self: center;
+}
+.titlebar__opacity:hover { opacity: 1; }
+
+/* =========================================================================
+   Table view — grid on the left, knowledge panel on the right
+   ========================================================================= */
+
+.table-view {
+  flex: 1;
+  min-height: var(--table-min-height);
+  display: flex;
+  overflow: hidden;
+}
+
+.grid-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  overflow: auto;
+}
+
+.element-grid {
+  display: grid;
+  grid-template-columns: repeat(18, minmax(30px, 1fr));
+  /* Row 8 is the deliberate gap above the lanthanide/actinide strip — see
+     periodic-table.js for why xpos/ypos alone already encode this layout. */
+  grid-template-rows: repeat(7, minmax(30px, 1fr)) 14px repeat(2, minmax(30px, 1fr));
+  gap: 2px;
+  flex: 1;
+  min-height: 0;
+}
+
+.element-cell {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 1px;
+  border: none;
+  border-radius: var(--radius-sm);
+  padding: 2px;
+  color: var(--cat-text);
+  cursor: pointer;
+  font-family: inherit;
+  transition: transform 0.08s, box-shadow 0.12s;
+  overflow: hidden;
+}
+.element-cell:hover { transform: scale(1.06); z-index: 1; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35); }
+.element-cell.is-selected { box-shadow: 0 0 0 2px var(--accent); z-index: 2; }
+.element-cell__number { font-size: 8px; align-self: flex-start; opacity: 0.7; line-height: 1; }
+.element-cell__symbol { font-size: 13px; font-weight: 600; line-height: 1.1; }
+
+.element-cell--alkali            { background: var(--cat-alkali); }
+.element-cell--alkaline-earth    { background: var(--cat-alkaline-earth); }
+.element-cell--transition        { background: var(--cat-transition); }
+.element-cell--post-transition   { background: var(--cat-post-transition); }
+.element-cell--metalloid         { background: var(--cat-metalloid); }
+.element-cell--reactive-nonmetal { background: var(--cat-reactive-nonmetal); }
+.element-cell--noble-gas         { background: var(--cat-noble-gas); }
+.element-cell--lanthanide        { background: var(--cat-lanthanide); }
+.element-cell--actinide          { background: var(--cat-actinide); }
+.element-cell--unknown           { background: var(--cat-unknown); }
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 14px;
+  padding-top: 8px;
+  flex-shrink: 0;
+  font-size: 10.5px;
+  color: var(--fg-dim);
+}
+.legend__item { display: inline-flex; align-items: center; gap: 5px; }
+.legend__swatch { width: 10px; height: 10px; border-radius: 2px; display: inline-block; }
+.legend__swatch--alkali            { background: var(--cat-alkali); }
+.legend__swatch--alkaline-earth    { background: var(--cat-alkaline-earth); }
+.legend__swatch--transition        { background: var(--cat-transition); }
+.legend__swatch--post-transition   { background: var(--cat-post-transition); }
+.legend__swatch--metalloid         { background: var(--cat-metalloid); }
+.legend__swatch--reactive-nonmetal { background: var(--cat-reactive-nonmetal); }
+.legend__swatch--noble-gas         { background: var(--cat-noble-gas); }
+.legend__swatch--lanthanide        { background: var(--cat-lanthanide); }
+.legend__swatch--actinide          { background: var(--cat-actinide); }
+.legend__swatch--unknown           { background: var(--cat-unknown); }
+
+/* =========================================================================
+   Knowledge panel
+   ========================================================================= */
+
+.knowledge-panel {
+  width: 260px;
+  flex-shrink: 0;
+  border-left: 1px solid var(--border);
+  background: var(--bg-raise);
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+.knowledge-panel::-webkit-scrollbar { display: none; }
+
+.knowledge-panel__placeholder {
+  padding: 20px;
+  color: var(--fg-faint);
+  font-size: 12px;
+  text-align: center;
+  font-style: italic;
+}
+.knowledge-panel__content[hidden] { display: none; }
+
+.kp-header {
+  padding: 16px 16px 14px;
+  color: var(--cat-text);
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kp-header__number { font-size: 11px; opacity: 0.7; font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+.kp-header__symbol { font-size: 32px; font-weight: 600; line-height: 1; }
+.kp-header__name   { font-size: 15px; font-weight: 500; }
+.kp-header__category { font-size: 10.5px; text-transform: uppercase; letter-spacing: 0.06em; opacity: 0.75; }
+
+.kp-header--alkali            { background: var(--cat-alkali); }
+.kp-header--alkaline-earth    { background: var(--cat-alkaline-earth); }
+.kp-header--transition        { background: var(--cat-transition); }
+.kp-header--post-transition   { background: var(--cat-post-transition); }
+.kp-header--metalloid         { background: var(--cat-metalloid); }
+.kp-header--reactive-nonmetal { background: var(--cat-reactive-nonmetal); }
+.kp-header--noble-gas         { background: var(--cat-noble-gas); }
+.kp-header--lanthanide        { background: var(--cat-lanthanide); }
+.kp-header--actinide          { background: var(--cat-actinide); }
+.kp-header--unknown           { background: var(--cat-unknown); }
+
+.kp-summary {
+  margin: 12px 16px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--fg-dim);
+}
+
+.kp-facts { margin: 0 16px 16px; }
+.kp-facts__row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 11.5px;
+}
+.kp-facts__row dt { color: var(--fg-faint); flex-shrink: 0; }
+.kp-facts__row dd { margin: 0; text-align: right; color: var(--fg); }
+
+/* =========================================================================
+   Battle pass panel (carried over from Latex-Floater essentially unchanged)
+   ========================================================================= */
+
+.graph__btn {
+  width: 22px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: var(--fg-faint);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background-color 0.12s, color 0.12s;
+}
+.graph__btn:hover { background: var(--bg-hover); color: var(--fg); }
+.graph__btn--toggle svg { transition: transform 0.15s; }
+.pass.is-collapsed .graph__btn--toggle svg { transform: rotate(180deg); }
+
+.pass {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  border-top: 1px solid var(--border);
+  background: var(--bg-bar);
+  overflow: hidden;
+}
+.pass.is-levelup { animation: pass-levelup 0.9s ease-out; }
+@keyframes pass-levelup {
+  0%   { box-shadow: 0 0 0 0 var(--accent-soft), inset 0 0 0 1px var(--accent); }
+  100% { box-shadow: 0 0 0 12px transparent, inset 0 0 0 1px transparent; }
+}
+
+.pass__bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 4px 8px 4px 12px;
+  font-size: 11px;
+  color: var(--fg-dim);
+  flex-shrink: 0;
+  cursor: pointer;
+}
+.pass__bar:hover { background: var(--bg-hover); }
+.pass:not(.is-collapsed) .pass__bar { border-bottom: 1px solid var(--border); }
+.pass__title {
+  font-size: 9px;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--accent);
+  font-weight: 600;
+}
+.pass__level { font-weight: 500; color: var(--fg); }
+.pass__xpbar {
+  flex: 1;
+  height: 4px;
+  border-radius: 2px;
+  background: var(--border);
+  overflow: hidden;
+}
+.pass__xpfill {
+  display: block;
+  height: 100%;
+  width: 0;
+  background: var(--accent);
+  transition: width 0.3s ease-out;
+}
+.pass__xp { font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 10.5px; }
+.pass__gain {
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--success);
+}
+.pass__gain[hidden] { display: none; }
+.pass__gain.is-pop { animation: pass-pop 1.6s ease-out forwards; }
+@keyframes pass-pop {
+  0%   { opacity: 0; transform: translateY(4px); }
+  15%  { opacity: 1; transform: translateY(0); }
+  80%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+.pass__track-wrap {
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+  height: 156px;
+  background: var(--bg-sink);
+  cursor: grab;
+  user-select: none;
+}
+.pass__track-wrap::-webkit-scrollbar { display: none; }
+.pass__track-wrap.is-panning { cursor: grabbing; }
+.pass__node.is-theme.is-done { cursor: pointer; }
+.pass__track-wrap[hidden] { display: none; }
+.pass__track {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 28px;
+  width: max-content;
+}
+.pass__track::before {
+  content: "";
+  position: absolute;
+  left: 60px; right: 60px;
+  top: 50%;
+  height: 2px;
+  background: var(--border-strong);
+  transform: translateY(-50%);
+}
+.pass__fill {
+  position: absolute;
+  left: 60px;
+  top: 50%;
+  height: 2px;
+  max-width: calc(100% - 120px);
+  background: var(--accent);
+  transform: translateY(-50%);
+  transition: width 0.4s ease-out;
+}
+.pass__node {
+  position: relative;
+  z-index: 1;
+  width: 64px;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: none;
+  background: transparent;
+  color: var(--fg-faint);
+  font: inherit;
+  cursor: default;
+}
+.pass__reward { height: 22px; display: flex; align-items: center; }
+.pass__dot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  border: 2px solid var(--border-strong);
+  background: var(--bg-sink);
+  color: var(--fg-faint);
+  font-family: 'IBM Plex Mono', ui-monospace, monospace;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s, border-color 0.2s;
+}
+.pass__label { font-size: 10px; height: 14px; white-space: nowrap; }
+.pass__node.is-done .pass__dot { background: var(--accent); border-color: var(--accent); color: var(--bg); }
+.pass__node.is-done { color: var(--fg-dim); }
+.pass__node.is-current .pass__dot { box-shadow: 0 0 0 4px var(--accent-soft); }
+.pass__node.is-current .pass__label { color: var(--fg); }
+.pass__node.is-theme .pass__label { font-weight: 500; }
+.pass__node.is-theme.is-done .pass__label { color: var(--fg); }
+.pass__node:not(.is-done) .pass__reward { opacity: 0.45; }
+
+.pass__swatch {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, var(--swatch) 0 42%, var(--swatch-bg) 46%);
+  border: 1px solid var(--border-strong);
+  flex-shrink: 0;
+}
+.pass__node.is-unique .pass__swatch { width: 20px; height: 20px; box-shadow: 0 0 0 2px var(--swatch); }
+.pass__node.is-gold .pass__swatch {
+  width: 22px; height: 22px;
+  box-shadow: 0 0 0 2px #f5c542, 0 0 12px rgba(245, 197, 66, 0.7);
+}
+.pass__node.is-unique .pass__dot { width: 30px; height: 30px; }
+.pass__node.is-gold .pass__dot { width: 32px; height: 32px; border-color: #f5c542; }
+
+/* =========================================================================
+   Theme flourishes — adapted from Latex-Floater's hooks to this app's DOM.
+   ========================================================================= */
+
+html[data-theme="nebula"] body {
+  background-image: radial-gradient(ellipse at 20% 0%, rgba(217, 123, 255, 0.18), transparent 55%),
+                    radial-gradient(ellipse at 90% 100%, rgba(80, 140, 255, 0.16), transparent 50%),
+                    linear-gradient(180deg, var(--bg) 0%, var(--bg-sink) 100%);
+}
+html[data-theme="synthwave"] .titlebar__name { text-shadow: 0 0 8px var(--accent), 0 0 18px rgba(255, 79, 216, 0.5); color: var(--fg); }
+html[data-theme="blueprint"] .grid-panel {
+  background-image: linear-gradient(rgba(255, 255, 255, 0.07) 1px, transparent 1px),
+                    linear-gradient(90deg, rgba(255, 255, 255, 0.07) 1px, transparent 1px);
+  background-size: 16px 16px;
+}
+html[data-theme="terminal"] body, html[data-theme="terminal"] .titlebar__btn { font-family: 'IBM Plex Mono', ui-monospace, monospace; }
+html[data-theme="gold"] .titlebar__name {
+  background: linear-gradient(90deg, #f5c542, #fff3c4, #f5c542, #c9962b);
+  background-size: 200% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: gold-shimmer 3s linear infinite;
+}
+@keyframes gold-shimmer { to { background-position: 200% 0; } }
+html[data-theme="gold"] .titlebar__dot { box-shadow: 0 0 10px #f5c542; }
+html[data-theme="gold"] .titlebar,
+html[data-theme="gold"] .pass__bar {
+  position: relative;
+  background:
+    linear-gradient(180deg, rgba(255, 226, 140, 0.10) 0%, rgba(0, 0, 0, 0) 45%, rgba(0, 0, 0, 0.28) 100%),
+    var(--bg-bar);
+  border-color: #8a6a1a;
+  overflow: hidden;
+}
+html[data-theme="gold"] .titlebar::after,
+html[data-theme="gold"] .pass__bar::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: linear-gradient(115deg, transparent 38%, rgba(255, 236, 170, 0.18) 47%, rgba(255, 255, 255, 0.42) 50%, rgba(255, 236, 170, 0.18) 53%, transparent 62%);
+  background-size: 260% 100%;
+  animation: gold-sweep 7s ease-in-out infinite;
+}
+html[data-theme="gold"] .pass__bar::after { animation-delay: 4.6s; }
+@keyframes gold-sweep {
+  0%, 60% { background-position: 130% 0; }
+  100%    { background-position: -30% 0; }
+}
+html[data-theme="gold"] .titlebar__name { filter: drop-shadow(0 0 6px rgba(245, 197, 66, 0.55)); }
+html[data-theme="gold"] .pass__title {
+  background: linear-gradient(90deg, #c9962b, #fff1b8, #f5c542);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+html[data-theme="gold"] .pass__xpfill { background: linear-gradient(90deg, #c9962b, #fff1b8 60%, #f5c542); box-shadow: 0 0 8px rgba(245, 197, 66, 0.6); }
+html[data-theme="gold"] .pass__node.is-gold .pass__dot { animation: gold-breathe 2.4s ease-in-out infinite; }
+@keyframes gold-breathe {
+  0%, 100% { box-shadow: 0 0 0 4px var(--accent-soft), 0 0 10px rgba(245, 197, 66, 0.5); }
+  50%      { box-shadow: 0 0 0 6px var(--accent-soft), 0 0 24px rgba(245, 197, 66, 0.9); }
+}

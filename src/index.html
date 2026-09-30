@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Periodic Table</title>
+
+  <!-- IBM Plex self-hosted the same way as Latex-Floater (src/fonts/, the
+       @font-face rules live in styles.css) — no network dependency to render. -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <!-- =================================================================
+       Title bar. Same drag-region pattern as Latex-Floater: Tauri starts a
+       native drag on mousedown of an element carrying data-tauri-drag-region
+       — and only that element, not its children — so the bar and each piece
+       of the brand carry it, while the buttons and slider on the right don't.
+       No font-size controls and no history clock icon here: neither applies
+       to this app (there's no editable text field and no session history).
+       ================================================================= -->
+  <header class="titlebar" data-tauri-drag-region>
+    <div class="titlebar__brand" data-tauri-drag-region>
+      <span class="titlebar__dot" aria-hidden="true" data-tauri-drag-region></span>
+      <span class="titlebar__name" data-tauri-drag-region>Periodic Table</span>
+    </div>
+    <div class="titlebar__controls">
+      <!-- LaTeX coins carried over as-is (battle pass reward currency; gold
+           whatever the theme, and still buys nothing). -->
+      <span class="titlebar__coins" id="coins" title="Coins — earned from the battle pass. They do nothing. Yet.">
+        <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><circle cx="8" cy="8" r="6.5" fill="currentColor" opacity="0.9"/><text x="8" y="11.2" text-anchor="middle" font-size="8.5" font-family="IBM Plex Mono, monospace" font-weight="600" fill="var(--bg-bar)">L</text></svg>
+        <span id="coin-count">0</span>
+      <button id="btn-theme" class="titlebar__btn" title="Toggle light/dark mode">
+        <svg id="icon-sun" viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true">
+          <circle cx="8" cy="8" r="3"/>
+          <path d="M8 1v2M8 13v2M1 8h2M13 8h2M3.22 3.22l1.42 1.42M11.36 11.36l1.42 1.42M3.22 12.78l1.42-1.42M11.36 4.64l1.42-1.42" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+        </svg>
+        <svg id="icon-moon" viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true" style="display:none">
+          <path d="M6 2a6 6 0 1 0 8 8 4.5 4.5 0 0 1-8-8z"/>
+        </svg>
+      </button>
+      <button id="btn-palette" class="titlebar__btn" title="Themes">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M13.5 2.5 6.8 9.2M6.8 9.2c-1 1-1 2.3-2.2 3.2-.9.7-2.3.8-3.1.4 1.2-.6 1.1-1.7 1.6-2.7.6-1.1 1.9-1.4 2.7-.6l1-.3z"/>
+          <path d="M13.5 2.5c.5.5.5 1.2 0 1.7l-5.2 5.2-1.5-1.5 5-5.2c.5-.5 1.2-.5 1.7-.2z"/>
+        </svg>
+      </button>
+      </span>
+      <input  id="opacity-slider" class="titlebar__opacity" type="range" min="20" max="100" value="100" step="5" title="Window opacity">
+      <button id="btn-pin"      class="titlebar__btn titlebar__btn--pin" title="Toggle always-on-top">
+        <svg viewBox="0 0 16 16" width="12" height="12" fill="currentColor" aria-hidden="true">
+          <path d="M9.828 1.172a1 1 0 0 0-1.414 0L6.586 3H4a1 1 0 0 0-.707 1.707L6 7.414V11l-2.707 2.707A1 1 0 0 0 4 15.414h8a1 1 0 0 0 .707-1.707L10 11V7.414l2.707-2.707A1 1 0 0 0 12 3H9.414L7.586 1.172a1 1 0 0 0-1.414 0z"/>
+        </svg>
+      </button>
+      <button id="btn-minimize" class="titlebar__btn" title="Minimize">
+        <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor" aria-hidden="true"><rect x="2" y="5.5" width="8" height="1"/></svg>
+      </button>
+      <button id="btn-close"    class="titlebar__btn titlebar__btn--close" title="Close">
+        <svg viewBox="0 0 12 12" width="10" height="10" fill="currentColor" aria-hidden="true"><path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="1.4"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- =================================================================
+       The grid and the knowledge panel, side by side. Unlike Latex-
+       Floater's history box (an overlay you slide in and out), the panel
+       here is a permanent fixture: the window is wide enough for both at
+       once, and clicking through many elements in a row is the whole point.
+       ================================================================= -->
+  <main class="table-view">
+    <section class="grid-panel">
+      <div class="element-grid" id="element-grid"></div>
+      <div class="legend" id="legend"></div>
+    </section>
+    <aside class="knowledge-panel" id="knowledge-panel">
+      <div class="knowledge-panel__placeholder" id="kp-placeholder">Click an element to see its details.</div>
+      <div class="knowledge-panel__content" id="kp-content" hidden></div>
+    </aside>
+  </main>
+
+  <!-- The theme dropdown, positioned under the paint-brush button by battlepass.js. -->
+  <div class="menu" id="theme-menu" hidden></div>
+
+  <!-- =================================================================
+       The battle pass — carried over from Latex-Floater essentially
+       unchanged (see battlepass.js): same bar-plus-track shape, same
+       collapsed-by-default behaviour, same click-anywhere-on-the-bar toggle.
+       ================================================================= -->
+  <section class="pass is-collapsed" id="pass">
+    <div class="pass__bar">
+      <span class="pass__title">Battle Pass</span>
+      <span class="pass__level" id="pass-level">Level 1</span>
+      <span class="pass__xpbar"><span class="pass__xpfill" id="pass-xpfill"></span></span>
+      <span class="pass__xp" id="pass-xp">0 / 90 XP</span>
+      <span class="pass__gain" id="pass-gain" hidden></span>
+      <button id="pass-toggle" class="graph__btn graph__btn--toggle" title="Expand battle pass">
+        <svg viewBox="0 0 16 16" width="11" height="11" fill="none" stroke="currentColor" stroke-width="1.6" aria-hidden="true"><path d="M3 10l5-5 5 5"/></svg>
+      </button>
+    </div>
+    <div class="pass__track-wrap" id="pass-track-wrap" hidden>
+      <div class="pass__track" id="pass-track"></div>
+    </div>
+  </section>
+
+  <!-- themes.js and bridge.js first (both are queried or called by what
+       follows); battlepass.js next since knowledge-panel.js calls
+       window.BattlePass.award(); periodic-table.js last among the data
+       modules since it calls window.KnowledgePanel.show() on click; app.js
+       boots the titlebar wiring. -->
+  <script src="themes.js"></script>
+  <script src="bridge.js"></script>
+  <script src="battlepass.js"></script>
+  <script src="knowledge-panel.js"></script>
+  <script src="periodic-table.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>

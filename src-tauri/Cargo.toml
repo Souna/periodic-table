@@ -1,0 +1,38 @@
+[package]
+name = "periodic-table"
+version = "0.1.0"
+description = "An interactive periodic table desktop app."
+edition = "2021"
+
+# Tauri's standard split: the app lives in a library crate so the same code
+# can be linked as a binary here and, if it's ever wanted, as a mobile lib.
+[lib]
+name = "periodic_table_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+# No clipboard plugin and no image-png feature: unlike Latex-Floater, this
+# app has nothing to export to the clipboard.
+tauri = { version = "2", features = [] }
+tauri-plugin-window-state = "2"
+
+# Window opacity has no cross-platform API in tauri/tao, so set_opacity in
+# lib.rs talks to the native window directly on each platform (same
+# approach as Latex-Floater's copy of this file).
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.59", features = ["Win32_Foundation", "Win32_UI_WindowsAndMessaging"] }
+
+[target.'cfg(target_os = "macos")'.dependencies]
+objc2-app-kit = { version = "0.3", features = ["NSWindow", "NSResponder"] }
+
+# Size over speed: this app does nothing CPU-bound, so trade codegen
+# parallelism and inlining for a smaller binary.
+[profile.release]
+codegen-units = 1
+lto = true
+opt-level = "s"
+panic = "abort"
+strip = true

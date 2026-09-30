@@ -1,0 +1,17 @@
+{
+  "name": "periodic-table-floater",
+  "version": "0.1.0",
+  "description": "An interactive periodic table desktop app, in the style of Latex-Floater.",
+  "type": "module",
+  "scripts": {
+    "build-data": "node scripts/build-data.js",
+    "start": "tauri dev",
+    "dev": "tauri dev",
+    "build": "tauri build",
+    "tauri": "tauri"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.11.5"
+  },
+  "private": true
+}
